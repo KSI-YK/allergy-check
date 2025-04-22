@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>アレルゲン検出OCR</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; background: #f9f9f9; }
+    .highlight { background: yellow; font-weight: bold; }
+    #preview { max-width: 100%; max-height: 400px; margin-top: 1rem; }
+    #result { white-space: pre-wrap; background: #fff; padding: 1rem; margin-top: 1rem; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>アレルゲン検出OCR</h1>
+  <input type="file" id="imageInput" accept="image/*" />
+  <br/><br/>
+  <label>検索する単語（カンマ区切り）:</label>
+  <input type="text" id="keywords" placeholder="例: 卵, 小麦, 乳" size="40" />
+  <br/><br/>
+  <button onclick="runOCR()">OCR開始</button>
+
+  <div>
+    <img id="preview" />
+  </div>
+
+  <div id="result"></div>
+
+  <script>
+    function runOCR() {
+      const file = document.getElementById('imageInput').files[0];
+      const keywords = document.getElementById('keywords').value.split(/[,\s]+/).filter(k => k);
+      if (!file || keywords.length === 0) {
+        alert('画像とキーワードを指定してください');
+        return;
+      }
+
+      const img = document.getElementById('preview');
+      img.src = URL.createObjectURL(file);
+
+      Tesseract.recognize(file, 'jpn', {
+        logger: m => console.log(m)
+      }).then(({ data: { text } }) => {
+        const highlighted = keywords.reduce((acc, word) => {
+          const re = new RegExp(`(${word})`, 'g');
+          return acc.replace(re, '<span class="highlight">$1</span>');
+        }, text);
+        document.getElementById('result').innerHTML = highlighted;
+      });
+    }
+  </script>
+</body>
+</html>
